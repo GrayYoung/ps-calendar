@@ -62,8 +62,8 @@ var Calendar = {
 		CHS : '星期六'
 	} ],
 	zodiacs : [ '鼠', '牛', '虎', '兔', '龙', '蛇', '马', '羊', '猴', '鸡', '狗', '猪' ],
-	gan : [ '甲', '乙', '丙', '丁', '戊', '己', '庚', '辛', '壬', '癸' ],
-	zhi : [ '子', '丑', '寅', '卯', '辰', '巳', '午', '未', '申', '酉', '戌', '亥' ],
+	tenCelestialStems : [ '甲', '乙', '丙', '丁', '戊', '己', '庚', '辛', '壬', '癸' ],
+	twelveBranches : [ '子', '丑', '寅', '卯', '辰', '巳', '午', '未', '申', '酉', '戌', '亥' ],
 	solarTerms : [ {
 		0 : '小寒'
 	}, {
@@ -149,8 +149,31 @@ var Calendar = {
 		SC_1225 : '圣诞节',
 		SC_1226 : '毛主席诞辰'
 	},
-	getLunarYear : function() {
-		
+	lunarHash : [ 0x04bd8, 0x04ae0, 0x0a570, 0x054d5, 0x0d260, 0x0d950, 0x16554, 0x056a0, 0x09ad0, 0x055d2, 0x04ae0, 0x0a5b6, 0x0a4d0, 0x0d250, 0x1d255, 0x0b540, 0x0d6a0, 0x0ada2, 0x095b0, 0x14977, 0x04970, 0x0a4b0, 0x0b4b5, 0x06a50, 0x06d40, 0x1ab54, 0x02b60, 0x09570, 0x052f2, 0x04970, 0x06566, 0x0d4a0, 0x0ea50, 0x06e95, 0x05ad0, 0x02b60, 0x186e3, 0x092e0, 0x1c8d7, 0x0c950, 0x0d4a0, 0x1d8a6, 0x0b550, 0x056a0, 0x1a5b4, 0x025d0, 0x092d0, 0x0d2b2, 0x0a950, 0x0b557, 0x06ca0, 0x0b550,
+		0x15355, 0x04da0, 0x0a5d0, 0x14573, 0x052d0, 0x0a9a8, 0x0e950, 0x06aa0, 0x0aea6, 0x0ab50, 0x04b60, 0x0aae4, 0x0a570, 0x05260, 0x0f263, 0x0d950, 0x05b57, 0x056a0, 0x096d0, 0x04dd5, 0x04ad0, 0x0a4d0, 0x0d4d4, 0x0d250, 0x0d558, 0x0b540, 0x0b5a0, 0x195a6, 0x095b0, 0x049b0, 0x0a974, 0x0a4b0, 0x0b27a, 0x06a50, 0x06d40, 0x0af46, 0x0ab60, 0x09570, 0x04af5, 0x04970, 0x064b0, 0x074a3, 0x0ea50, 0x06b58, 0x055c0, 0x0ab60, 0x096d5, 0x092e0, 0x0c960, 0x0d954, 0x0d4a0, 0x0da50, 0x07552, 0x056a0,
+		0x0abb7, 0x025d0, 0x092d0, 0x0cab5, 0x0a950, 0x0b4a0, 0x0baa4, 0x0ad50, 0x055d9, 0x04ba0, 0x0a5b0, 0x15176, 0x052b0, 0x0a930, 0x07954, 0x06aa0, 0x0ad50, 0x05b52, 0x04b60, 0x0a6e6, 0x0a4e0, 0x0d260, 0x0ea65, 0x0d530, 0x05aa0, 0x076a3, 0x096d0, 0x04bd7, 0x04ad0, 0x0a4d0, 0x1d0b6, 0x0d250, 0x0d520, 0x0dd45, 0x0b5a0, 0x056d0, 0x055b2, 0x049b0, 0x0a577, 0x0a4b0, 0x0aa50, 0x1b255, 0x06d20, 0x0ada0 ],
+	getNumberOfDarsOfLunarYear : function(year) {
+		var i, sum = 348;
+
+		for (i = 0x8000; i > 0x8; i >>= 1) {
+			sum += (this.lunarHash[year - 1900] & i) ? 1 : 0;
+		}
+
+		return (sum + this.getNumberOfEveryMonth(year, this.getLeapMonth(year)))
+	},
+	getLeapMonth : function(year) {
+		return this.lunarHash[year - 1900] & 0xf;
+	},
+	getNumberOfEveryMonth : function(year, month) {
+		if (this.getLeapMonth(year) === month) {
+			// Get number of leap month in the lunar calendar.
+			return (this.lunarHash[year - 1900] & 0x10000) ? 30 : 29;
+		}
+
+		return (this.lunarHash[year - 1900] & (0x10000 >> month)) ? 30 : 29;
+	},
+	getSexagenarySycle : function(index) {
+		return this.tenCelestialStems[ index % this.tenCelestialStems.length ] + this.twelveBranches[ index % this.twelveBranches.length ];
 	},
 	getLunarDate : function(m, d) {
 		var nStr1 = new Array('日', '正', '二', '三', '四', '五', '六', '七', '八', '九', '十');
@@ -179,170 +202,141 @@ var Calendar = {
 		}
 
 		return lunarDate;
+	},
+	getLunarDate : function(theDate) {
+		var lunarDate = {};
+		var firstChars = new Array('日', '正', '二', '三', '四', '五', '六', '七', '八', '九', '十');
+		var secondChars = new Array('初', '十', '廿', '卅', '　');
+		var baseDate = new Date(1900, 0, 31);
+		var offset;
+		var i, leap = 0, temp = 0;
+
+		theDate.setFullYear(theDate.getFullYear() + 1900);
+		$.writeln('theDate: ' + theDate);
+		offset = (theDate - baseDate) / 86400000;
+		lunarDate.dayCyl = offset + 40;
+		lunarDate.monCyl = 14;
+
+		for(i = 1900; i < 2050 && offset > 0; i++) {
+			temp = this.getNumberOfDarsOfLunarYear(i);
+			offset -= temp;
+			lunarDate.monCyl += 12;
+		}
+		if (offset < 0) {
+			offset += temp;
+			i--;
+			lunarDate.monCyl -= 12;
+		}
+
+		lunarDate.year = i;
+		lunarDate.yearCyl = i - 1864;
+		lunarDate.day = theDate.getDate();
+
+		leap = this.getLeapMonth(i);
+		lunarDate.isLeap = false;
+
+		for (i = 1; i < 13 && offset > 0; i++) {
+			// 闰月
+			if (leap > 0 && i == (leap + 1) && this.isLeap == false) {
+				--i;
+				lunarDate.isLeap = true;
+				temp = this.getNumberOfEveryMonth(this.year, leap);
+			} else {
+				temp = this.getNumberOfEveryMonth(this.year, i);
+			}
+
+			// 解除闰月
+			if (lunarDate.isLeap == true && i == (leap + 1))
+				lunarDate.isLeap = false;
+
+			offset -= temp;
+			if (lunarDate.isLeap == false)
+				lunarDate.monCyl++;
+		}
+
+		if (offset == 0 && leap > 0 && i == leap + 1)
+			if (lunarDate.isLeap) {
+				lunarDate.isLeap = false;
+			} else {
+				lunarDate.isLeap = true;
+				--i;
+				--lunarDate.monCyl;
+			}
+
+		if (offset < 0) {
+			offset += temp;
+			--i;
+			--lunarDate.monCyl;
+		}
+
+		lunarDate.zodiac = this.zodiacs[ (lunarDate.year - 4) % this.zodiacs.length ];
+		lunarDate.lunarYear = this.getSexagenarySycle(lunarDate.year - 1900 + 36);
+		lunarDate.month = i;
+		lunarDate.SC_LunarMonth = this.getSexagenarySycle(lunarDate.monCyl);
+		if (lunarDate.month > 10) {
+			lunarDate.lunarMonth = '十' + firstChars[ lunarDate.month - 10 ];
+		} else {
+			lunarDate.lunarMonth = firstChars[ lunarDate.month ];
+		}
+		lunarDate.SC_LunarDay = this.getSexagenarySycle(lunarDate.dayCyl++);
+		switch (lunarDate.day) {
+			case 10:
+				lunarDate.lunarDay = '初十';
+				break;
+			case 20:
+				lunarDate.lunarDay = '二十';
+				break;
+			case 30:
+				lunarDate.lunarDay = '三十';
+				break;
+			default:
+				lunarDate.lunarDay = secondChars[ Math.floor(lunarDate.day / 10) ] + firstChars[ lunarDate.day ];
+		}
+		lunarDate.day = offset + 1;
+
+		var solarTerms = '', solarFestival = '', lunarFestival = '', tmp1, tmp2;
+
+		lunarDate.festival = this.additionalFestivals[ 'SC_' + lunarDate.month + lunarDate.day ];
+		// 农历节日
+		for (i in lFtv)
+			if (lFtv[i].match(/^(d{2})(.{2})([s*])(.+)$/)) {
+				tmp1 = Number(RegExp.$1) - lDObj.month
+				tmp2 = Number(RegExp.$2) - lDObj.day
+				if (tmp1 == 0 && tmp2 == 0)
+					lunarFestival = RegExp.$4
+			}
+		// 国历节日
+		for (i in sFtv)
+			if (sFtv[i].match(/^(d{2})(d{2})([s*])(.+)$/)) {
+				tmp1 = Number(RegExp.$1) - (SM + 1)
+				tmp2 = Number(RegExp.$2) - SD
+				if (tmp1 == 0 && tmp2 == 0)
+					solarFestival = RegExp.$4
+			}
+		// 节气
+		tmp1 = new Date((31556925974.7 * (theDate.getFullYear() - 1900) + sTermInfo[SM * 2 + 1] * 60000) + Date.UTC(1900, 0, 6, 2, 5));
+		tmp2 = tmp1.getUTCDate();
+		if (tmp2 == SD) {
+			lunarDate.festival = solarTerm[SM * 2 + 1];
+		}
+		tmp1 = new Date((31556925974.7 * (theDate.getFullYear() - 1900) + sTermInfo[SM * 2] * 60000) + Date.UTC(1900, 0, 6, 2, 5));
+		tmp2 = tmp1.getUTCDate();
+		if (tmp2 == SD) {
+			lunarDate.festival = solarTerm[SM * 2];
+		}
+
+		return lunarDate;
 	}
 };
 
-var lunarInfo = new Array(0x04bd8, 0x04ae0, 0x0a570, 0x054d5, 0x0d260, 0x0d950, 0x16554, 0x056a0, 0x09ad0, 0x055d2, 0x04ae0, 0x0a5b6, 0x0a4d0, 0x0d250, 0x1d255, 0x0b540, 0x0d6a0, 0x0ada2, 0x095b0, 0x14977, 0x04970, 0x0a4b0, 0x0b4b5, 0x06a50, 0x06d40, 0x1ab54, 0x02b60, 0x09570, 0x052f2, 0x04970, 0x06566, 0x0d4a0, 0x0ea50, 0x06e95, 0x05ad0, 0x02b60, 0x186e3, 0x092e0, 0x1c8d7, 0x0c950, 0x0d4a0, 0x1d8a6, 0x0b550, 0x056a0, 0x1a5b4, 0x025d0, 0x092d0, 0x0d2b2, 0x0a950, 0x0b557, 0x06ca0, 0x0b550,
-	0x15355, 0x04da0, 0x0a5d0, 0x14573, 0x052d0, 0x0a9a8, 0x0e950, 0x06aa0, 0x0aea6, 0x0ab50, 0x04b60, 0x0aae4, 0x0a570, 0x05260, 0x0f263, 0x0d950, 0x05b57, 0x056a0, 0x096d0, 0x04dd5, 0x04ad0, 0x0a4d0, 0x0d4d4, 0x0d250, 0x0d558, 0x0b540, 0x0b5a0, 0x195a6, 0x095b0, 0x049b0, 0x0a974, 0x0a4b0, 0x0b27a, 0x06a50, 0x06d40, 0x0af46, 0x0ab60, 0x09570, 0x04af5, 0x04970, 0x064b0, 0x074a3, 0x0ea50, 0x06b58, 0x055c0, 0x0ab60, 0x096d5, 0x092e0, 0x0c960, 0x0d954, 0x0d4a0, 0x0da50, 0x07552, 0x056a0,
-	0x0abb7, 0x025d0, 0x092d0, 0x0cab5, 0x0a950, 0x0b4a0, 0x0baa4, 0x0ad50, 0x055d9, 0x04ba0, 0x0a5b0, 0x15176, 0x052b0, 0x0a930, 0x07954, 0x06aa0, 0x0ad50, 0x05b52, 0x04b60, 0x0a6e6, 0x0a4e0, 0x0d260, 0x0ea65, 0x0d530, 0x05aa0, 0x076a3, 0x096d0, 0x04bd7, 0x04ad0, 0x0a4d0, 0x1d0b6, 0x0d250, 0x0d520, 0x0dd45, 0x0b5a0, 0x056d0, 0x055b2, 0x049b0, 0x0a577, 0x0a4b0, 0x0aa50, 0x1b255, 0x06d20, 0x0ada0);
-
-var now = new Date();
-var SY = now.getYear() + 1900;
-
-var SM = now.getMonth();
-var SD = now.getDate();
-
-function cyclical(num) {
-	return (Calendar.gan[num] + Calendar.zhi[num])
-} // ==== 传入 offset 传回干支, 0=甲子
-// ==== 传回农历 y年的总天数
-function lYearDays(y) {
-	var i, sum = 348
-	for (i = 0x8000; i > 0x8; i >>= 1)
-		sum += (lunarInfo[y - 1900] & i) ? 1 : 0
-	return (sum + leapDays(y))
-}
-
-// ==== 传回农历 y年闰月的天数
-function leapDays(y) {
-	if (leapMonth(y))
-		return ((lunarInfo[y - 1900] & 0x10000) ? 30 : 29)
-	else
-		return (0)
-}
-
-// ==== 传回农历 y年闰哪个月 1-12 , 没闰传回 0
-function leapMonth(y) {
-	return (lunarInfo[y - 1900] & 0xf)
-}
-
-// ====================================== 传回农历 y年m月的总天数
-function monthDays(y, m) {
-	return ((lunarInfo[y - 1900] & (0x10000 >> m)) ? 30 : 29)
-}
-
-// ==== 算出农历, 传入日期物件, 传回农历日期物件
-// 该物件属性有 .year .month .day .isLeap .yearCyl .dayCyl .monCyl
-function Lunar(objDate) {
-	var i, leap = 0, temp = 0;
-	var baseDate = new Date(1900, 0, 31);
-	var offset = (objDate - baseDate) / 86400000;
-
-	this.dayCyl = offset + 40
-	this.monCyl = 14
-
-	for(i = 1900; i < 2050 && offset > 0; i++) {
-		temp = lYearDays(i);
-		offset -= temp;
-		this.monCyl += 12;
-	}
-	if (offset < 0) {
-		offset += temp;
-		i--;
-		this.monCyl -= 12;
-	}
-
-	this.year = i;
-	this.yearCyl = i - 1864;
-
-	leap = leapMonth(i); // 闰哪个月
-	this.isLeap = false;
-
-	for (i = 1; i < 13 && offset > 0; i++) {
-		// 闰月
-		if (leap > 0 && i == (leap + 1) && this.isLeap == false) {
-			--i;
-			this.isLeap = true;
-			temp = leapDays(this.year);
-		} else {
-			temp = monthDays(this.year, i);
-		}
-
-		// 解除闰月
-		if (this.isLeap == true && i == (leap + 1))
-			this.isLeap = false;
-
-		offset -= temp;
-		if (this.isLeap == false)
-			this.monCyl++;
-	}
-
-	if (offset == 0 && leap > 0 && i == leap + 1)
-		if (this.isLeap) {
-			this.isLeap = false;
-		} else {
-			this.isLeap = true;
-			--i;
-			--this.monCyl;
-		}
-
-	if (offset < 0) {
-		offset += temp;
-		--i;
-		--this.monCyl;
-	}
-
-	this.month = i
-	this.day = offset + 1
-}
-
-$.writeln(solarDay1());
-
-function solarDay1() {
-	var sDObj = new Date(SY, SM, SD);
-	var lDObj = new Lunar(sDObj);
-	var tt = cyclical(lDObj.monCyl) + '月 ' + cyclical(lDObj.dayCyl++) + '日';
-	return (tt);
-}
-
-function solarDay2() {
-	var sDObj = new Date(SY, SM, SD);
-	var lDObj = new Lunar(sDObj);
-	var tt = cyclical(SY - 1900 + 36) + '年【' + Animals[(SY - 4)] + '】' + cDay(lDObj.month, lDObj.day);
-	return (tt);
-}
-
-function solarDay3() {
-	var lFtv = new Array()
-	var sFtv = new Array()
-
-	var sDObj = new Date(SY, SM, SD);
-	var lDObj = new Lunar(sDObj);
-	var lDPOS = new Array(3)
-	var festival = '', solarTerms = '', solarFestival = '', lunarFestival = '', tmp1, tmp2;
-	// 农历节日
-	for (i in lFtv)
-		if (lFtv[i].match(/^(d{2})(.{2})([s*])(.+)$/)) {
-			tmp1 = Number(RegExp.$1) - lDObj.month
-			tmp2 = Number(RegExp.$2) - lDObj.day
-			if (tmp1 == 0 && tmp2 == 0)
-				lunarFestival = RegExp.$4
-		}
-	// 国历节日
-	for (i in sFtv)
-		if (sFtv[i].match(/^(d{2})(d{2})([s*])(.+)$/)) {
-			tmp1 = Number(RegExp.$1) - (SM + 1)
-			tmp2 = Number(RegExp.$2) - SD
-			if (tmp1 == 0 && tmp2 == 0)
-				solarFestival = RegExp.$4
-		}
-	// 节气
-	tmp1 = new Date((31556925974.7 * (SY - 1900) + sTermInfo[SM * 2 + 1] * 60000) + Date.UTC(1900, 0, 6, 2, 5))
-	tmp2 = tmp1.getUTCDate()
-	if (tmp2 == SD)
-		solarTerms = solarTerm[SM * 2 + 1]
-	tmp1 = new Date((31556925974.7 * (SY - 1900) + sTermInfo[SM * 2] * 60000) + Date.UTC(1900, 0, 6, 2, 5))
-	tmp2 = tmp1.getUTCDate()
-	if (tmp2 == SD)
-		solarTerms = solarTerm[SM * 2]
-
-	if (solarTerms == '' && solarFestival == '' && lunarFestival == '')
-		festival = '';
-	else
-		festival = solarTerms + ' ' + solarFestival + ' ' + lunarFestival;
-
-	return (festival);
-}
+var td = Calendar.getLunarDate(new Date());
+$.writeln(td.zodiac);
+$.writeln(td.lunarYear);
+$.writeln(td.lunarMonth);
+$.writeln(td.lunarDay);
+$.writeln(td.year);
+$.writeln(td.month);
+$.writeln(td.day);
 
 /**
  * Calendar Configuration
@@ -371,7 +365,7 @@ var originalUnits = {
 
 app.preferences.rulerUnits = Units[ calendarData.dimension.unit ];
 //app.preferences.typeUnits = TypeUnits[ calendarData.dimension.unit ];
-while (app.documents.length) {
+while(app.documents.length) {
 	app.activeDocument.close()
 }
 app.activeDocument = app.documents.add(calendarData.dimension.width, calendarData.dimension.height, calendarData.dimension.resolution, calendarData.DOM_Name());
