@@ -136,7 +136,7 @@ var Calendar = {
 		SC_0504 : '青年节',
 		SC_0512 : '护士节',
 		SC_0601 : '儿童节',
-		SC_0701 : '建党节 香港回归纪念',
+		SC_0701 : [ '建党节', '香港回归纪念' ],
 		SC_0801 : '建军节',
 		SC_0909 : '毛主席逝世纪念',
 		SC_0910 : '教师节',
@@ -175,65 +175,38 @@ var Calendar = {
 	getSexagenarySycle : function(index) {
 		return this.tenCelestialStems[ index % this.tenCelestialStems.length ] + this.twelveBranches[ index % this.twelveBranches.length ];
 	},
-	getLunarDate : function(m, d) {
-		var nStr1 = new Array('日', '正', '二', '三', '四', '五', '六', '七', '八', '九', '十');
-		var nStr2 = new Array('初', '十', '廿', '卅', '　');
-		var lunarDate;
-
-		if (m > 10) {
-			lunarDate = '十' + nStr1[m - 10]
-		} else {
-			lunarDate = nStr1[m]
-		}
-		lunarDate += '月'
-		switch (d) {
-			case 10:
-				lunarDate += '初十';
-				break;
-			case 20:
-				lunarDate += '二十';
-				break;
-			case 30:
-				lunarDate += '三十';
-				break;
-			default:
-				lunarDate += nStr2[Math.floor(d / 10)];
-				lunarDate += nStr1[d];
-		}
-
-		return lunarDate;
-	},
 	getLunarDate : function(theDate) {
-		var lunarDate = {};
+		var lunarDate = {
+            year : theDate.getFullYear(),
+            month : theDate.getMonth(),
+            day : theDate.getDate(),
+            isLeap : false
+         };
 		var firstChars = new Array('日', '正', '二', '三', '四', '五', '六', '七', '八', '九', '十');
 		var secondChars = new Array('初', '十', '廿', '卅', '　');
 		var baseDate = new Date(1900, 0, 31);
 		var offset;
 		var i, leap = 0, temp = 0;
 
-		theDate.setFullYear(theDate.getFullYear() + 1900);
-		$.writeln('theDate: ' + theDate);
 		offset = (theDate - baseDate) / 86400000;
-		lunarDate.dayCyl = offset + 40;
-		lunarDate.monCyl = 14;
+		lunarDate.cyclicalDay = offset + 40;
+		lunarDate.cyclicalMonth = 14;
 
 		for(i = 1900; i < 2050 && offset > 0; i++) {
 			temp = this.getNumberOfDarsOfLunarYear(i);
 			offset -= temp;
-			lunarDate.monCyl += 12;
+			lunarDate.cyclicalMonth += 12;
 		}
 		if (offset < 0) {
 			offset += temp;
 			i--;
-			lunarDate.monCyl -= 12;
+			lunarDate.cyclicalMonth -= 12;
 		}
 
-		lunarDate.year = i;
-		lunarDate.yearCyl = i - 1864;
-		lunarDate.day = theDate.getDate();
+		//lunarDate.year = i;
+		lunarDate.cyclicalYear = i - 1864;
 
-		leap = this.getLeapMonth(i);
-		lunarDate.isLeap = false;
+		leap = this.getLeapMonth(lunarDate.cyclicalYear);
 
 		for (i = 1; i < 13 && offset > 0; i++) {
 			// 闰月
@@ -251,7 +224,7 @@ var Calendar = {
 
 			offset -= temp;
 			if (lunarDate.isLeap == false)
-				lunarDate.monCyl++;
+				lunarDate.cyclicalMonth++;
 		}
 
 		if (offset == 0 && leap > 0 && i == leap + 1)
@@ -260,25 +233,25 @@ var Calendar = {
 			} else {
 				lunarDate.isLeap = true;
 				--i;
-				--lunarDate.monCyl;
+				--lunarDate.cyclicalMonth;
 			}
 
 		if (offset < 0) {
 			offset += temp;
 			--i;
-			--lunarDate.monCyl;
+			--lunarDate.cyclicalMonth;
 		}
 
 		lunarDate.zodiac = this.zodiacs[ (lunarDate.year - 4) % this.zodiacs.length ];
 		lunarDate.lunarYear = this.getSexagenarySycle(lunarDate.year - 1900 + 36);
 		lunarDate.month = i;
-		lunarDate.SC_LunarMonth = this.getSexagenarySycle(lunarDate.monCyl);
+		lunarDate.SC_LunarMonth = this.getSexagenarySycle(lunarDate.cyclicalMonth);
 		if (lunarDate.month > 10) {
 			lunarDate.lunarMonth = '十' + firstChars[ lunarDate.month - 10 ];
 		} else {
 			lunarDate.lunarMonth = firstChars[ lunarDate.month ];
 		}
-		lunarDate.SC_LunarDay = this.getSexagenarySycle(lunarDate.dayCyl++);
+		lunarDate.SC_LunarDay = this.getSexagenarySycle(lunarDate.cyclicalDay++);
 		switch (lunarDate.day) {
 			case 10:
 				lunarDate.lunarDay = '初十';
@@ -290,7 +263,7 @@ var Calendar = {
 				lunarDate.lunarDay = '三十';
 				break;
 			default:
-				lunarDate.lunarDay = secondChars[ Math.floor(lunarDate.day / 10) ] + firstChars[ lunarDate.day ];
+				lunarDate.lunarDay = secondChars[ Math.floor(lunarDate.day / 10) ] + firstChars[ lunarDate.day % 10 ];
 		}
 		lunarDate.day = offset + 1;
 
@@ -298,7 +271,7 @@ var Calendar = {
 
 		lunarDate.festival = this.additionalFestivals[ 'SC_' + lunarDate.month + lunarDate.day ];
 		// 农历节日
-		for (i in lFtv)
+		/* for (i in lFtv)
 			if (lFtv[i].match(/^(d{2})(.{2})([s*])(.+)$/)) {
 				tmp1 = Number(RegExp.$1) - lDObj.month
 				tmp2 = Number(RegExp.$2) - lDObj.day
@@ -312,16 +285,16 @@ var Calendar = {
 				tmp2 = Number(RegExp.$2) - SD
 				if (tmp1 == 0 && tmp2 == 0)
 					solarFestival = RegExp.$4
-			}
+			} */
 		// 节气
-		tmp1 = new Date((31556925974.7 * (theDate.getFullYear() - 1900) + sTermInfo[SM * 2 + 1] * 60000) + Date.UTC(1900, 0, 6, 2, 5));
+		tmp1 = new Date((31556925974.7 * (theDate.getFullYear() - 1900) + this.solarTerms[ lunarDate.month * 2 + 1 ] * 60000) + Date.UTC(1900, 0, 6, 2, 5));
 		tmp2 = tmp1.getUTCDate();
-		if (tmp2 == SD) {
+		if (tmp2 == lunarDate.day) {
 			lunarDate.festival = solarTerm[SM * 2 + 1];
 		}
-		tmp1 = new Date((31556925974.7 * (theDate.getFullYear() - 1900) + sTermInfo[SM * 2] * 60000) + Date.UTC(1900, 0, 6, 2, 5));
+		tmp1 = new Date((31556925974.7 * (theDate.getFullYear() - 1900) + this.solarTerms[ lunarDate.month * 2 ] * 60000) + Date.UTC(1900, 0, 6, 2, 5));
 		tmp2 = tmp1.getUTCDate();
-		if (tmp2 == SD) {
+		if (tmp2 == lunarDate.day) {
 			lunarDate.festival = solarTerm[SM * 2];
 		}
 
