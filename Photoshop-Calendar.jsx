@@ -65,63 +65,87 @@ var Calendar = {
 	tenCelestialStems : [ '甲', '乙', '丙', '丁', '戊', '己', '庚', '辛', '壬', '癸' ],
 	twelveBranches : [ '子', '丑', '寅', '卯', '辰', '巳', '午', '未', '申', '酉', '戌', '亥' ],
 	solarTerms : [ {
-		0 : '小寒'
+		NO : 0,
+		description : '小寒'
 	}, {
-		21208 : '大寒'
+		NO : 21208,
+		description : '大寒'
 	}, {
-		42467 : '立春'
+		NO : 42467,
+		description : '立春'
 	}, {
-		63836 : '雨水'
+		NO : 63836,
+		description : '雨水'
 	}, {
-		85337 : '惊蛰'
+		NO : 85337,
+		description : '惊蛰'
 	}, {
-		107014 : '春分'
+		NO : 107014,
+		description : '春分'
 	}, {
-		128867 : '清明'
+		NO : 128867,
+		description : '清明'
 	}, {
-		150921 : '谷雨'
+		NO : 150921,
+		description : '谷雨'
 	}, {
-		173149 : '立夏'
+		NO : 173149,
+		description : '立夏'
 	}, {
-		195551 : '小满'
+		NO : 195551,
+		description : '小满'
 	}, {
-		218072 : '芒种'
+		NO : 218072,
+		description : '芒种'
 	}, {
-		240693 : '夏至'
+		NO : 240693,
+		description : '夏至'
 	}, {
-		263343 : '小暑'
+		NO : 263343,
+		description : '小暑'
 	}, {
-		285989 : '大暑'
+		NO : 285989,
+		description : '大暑'
 	}, {
-		308563 : '立秋'
+		NO : 308563,
+		description : '立秋'
 	}, {
-		331033 : '处暑'
+		NO : 331033,
+		description : '处暑'
 	}, {
-		353350 : '白露'
+		NO : 353350,
+		description : '白露'
 	}, {
-		375494 : '秋分'
+		NO : 375494,
+		description : '秋分'
 	}, {
-		397447 : '寒露'
+		NO : 397447,
+		description : '寒露'
 	}, {
-		419210 : '霜降'
+		NO : 419210,
+		description : '霜降'
 	}, {
-		440795 : '立冬'
+		NO : 440795,
+		description : '立冬'
 	}, {
-		462224 : '小雪'
+		NO : 462224,
+		description : '小雪'
 	}, {
-		483532 : '大雪'
+		NO : 483532,
+		description : '大雪'
 	}, {
-		504758 : '冬至'
+		NO : 504758,
+		description : '冬至'
 	} ],
 	traditionalFestivals : {
 		LC_0101 : '春节',
-		LC_0115 : '元宵节',
-		LC_0505 : '端午节',
-		LC_0707 : '七夕情人节',
-		LC_0715 : '中元节',
-		LC_0815 : '中秋节',
-		LC_0909 : '重阳节',
-		LC_1208 : '腊八节',
+		LC_0115 : '元宵',
+		LC_0505 : '端午',
+		LC_0707 : '七夕',
+		LC_0715 : '中元',
+		LC_0815 : '中秋',
+		LC_0909 : '重阳',
+		LC_1208 : '腊八',
 		LC_1224 : '小年',
 		LC_0100 : '除夕'
 	},
@@ -136,16 +160,16 @@ var Calendar = {
 		SC_0504 : '青年节',
 		SC_0512 : '护士节',
 		SC_0601 : '儿童节',
-		SC_0701 : [ '建党节', '香港回归纪念' ],
+		SC_0701 : [ '建党节', '香港回归' ],
 		SC_0801 : '建军节',
-		SC_0909 : '毛主席逝世纪念',
+		SC_0909 : '毛主席逝世',
 		SC_0910 : '教师节',
 		SC_0928 : '孔子诞辰',
 		SC_1001 : '国庆节',
 		SC_1006 : '老人节',
 		SC_1024 : '联合国日',
 		SC_1112 : '孙中山诞辰',
-		SC_1220 : '澳门回归纪念',
+		SC_1220 : '澳门回归',
 		SC_1225 : '圣诞节',
 		SC_1226 : '毛主席诞辰'
 	},
@@ -165,6 +189,9 @@ var Calendar = {
 		return this.lunarHash[year - 1900] & 0xf;
 	},
 	getNumberOfEveryMonth : function(year, month) {
+		if(month === 0) {
+			return month;
+		}
 		if (this.getLeapMonth(year) === month) {
 			// Get number of leap month in the lunar calendar.
 			return (this.lunarHash[year - 1900] & 0x10000) ? 30 : 29;
@@ -177,18 +204,44 @@ var Calendar = {
 	},
 	getLunarDate : function(theDate) {
 		var lunarDate = {
-            year : theDate.getFullYear(),
-            month : theDate.getMonth(),
-            day : theDate.getDate(),
-            isLeap : false
-         };
+			year : theDate.getFullYear(),
+			month : theDate.getMonth() + 1,
+			day : theDate.getDate(),
+			lunarYear : {
+				NO : null,
+				description : ''
+			},
+			lunarMonth : {
+				NO : null,
+				description : '',
+				alt : ''
+			},
+			lunarDay : {
+				NO : null,
+				description : '',
+				alt : ''
+			},
+			festivals : new Array(),
+			isLeap : false
+		};
+		var solarTerms = this.solarTerms;
 		var firstChars = new Array('日', '正', '二', '三', '四', '五', '六', '七', '八', '九', '十');
 		var secondChars = new Array('初', '十', '廿', '卅', '　');
 		var baseDate = new Date(1900, 0, 31);
 		var offset;
 		var i, leap = 0, temp = 0;
 
-		offset = (theDate - baseDate) / 86400000;
+		var intoDoubleDigit = function(number) {
+			if(typeof number === 'number') {
+				return number < 10 ? '0' + number.toString() : number;
+			} else {
+				throw new Error('The argument is not a valid number.');
+			}
+
+			return 0;
+		};
+
+		offset = parseInt((theDate - baseDate) / 86400000);
 		lunarDate.cyclicalDay = offset + 40;
 		lunarDate.cyclicalMonth = 14;
 
@@ -203,31 +256,28 @@ var Calendar = {
 			lunarDate.cyclicalMonth -= 12;
 		}
 
-		//lunarDate.year = i;
+		lunarDate.lunarYear.NO = i;
 		lunarDate.cyclicalYear = i - 1864;
-
-		leap = this.getLeapMonth(lunarDate.cyclicalYear);
+		leap = this.getLeapMonth(lunarDate.lunarYear.NO);
 
 		for (i = 1; i < 13 && offset > 0; i++) {
-			// 闰月
-			if (leap > 0 && i == (leap + 1) && this.isLeap == false) {
+			if (leap > 0 && i == (leap + 1) && lunarDate.isLeap == false) {
 				--i;
 				lunarDate.isLeap = true;
-				temp = this.getNumberOfEveryMonth(this.year, leap);
+				temp = this.getNumberOfEveryMonth(lunarDate.lunarYear.NO, leap);
 			} else {
-				temp = this.getNumberOfEveryMonth(this.year, i);
+				temp = this.getNumberOfEveryMonth(lunarDate.lunarYear.NO, i);
 			}
-
-			// 解除闰月
-			if (lunarDate.isLeap == true && i == (leap + 1))
+			if (lunarDate.isLeap == true && i == (leap + 1)) {
 				lunarDate.isLeap = false;
-
+			}
 			offset -= temp;
-			if (lunarDate.isLeap == false)
+			if (lunarDate.isLeap == false) {
 				lunarDate.cyclicalMonth++;
+			}
 		}
 
-		if (offset == 0 && leap > 0 && i == leap + 1)
+		if (offset == 0 && leap > 0 && i == leap + 1) {
 			if (lunarDate.isLeap) {
 				lunarDate.isLeap = false;
 			} else {
@@ -235,81 +285,83 @@ var Calendar = {
 				--i;
 				--lunarDate.cyclicalMonth;
 			}
-
+		}
 		if (offset < 0) {
 			offset += temp;
 			--i;
 			--lunarDate.cyclicalMonth;
 		}
+		lunarDate.lunarMonth.NO = i;
+		lunarDate.lunarDay.NO = offset + 1;
 
 		lunarDate.zodiac = this.zodiacs[ (lunarDate.year - 4) % this.zodiacs.length ];
-		lunarDate.lunarYear = this.getSexagenarySycle(lunarDate.year - 1900 + 36);
-		lunarDate.month = i;
-		lunarDate.SC_LunarMonth = this.getSexagenarySycle(lunarDate.cyclicalMonth);
-		if (lunarDate.month > 10) {
-			lunarDate.lunarMonth = '十' + firstChars[ lunarDate.month - 10 ];
+		lunarDate.lunarYear.description = this.getSexagenarySycle(lunarDate.year - 1900 + 36);
+		lunarDate.lunarMonth.description = this.getSexagenarySycle(lunarDate.cyclicalMonth);
+		if (lunarDate.lunarMonth.NO > 10) {
+			lunarDate.lunarMonth.alt = '十' + firstChars[ lunarDate.lunarMonth.NO - 10 ];
 		} else {
-			lunarDate.lunarMonth = firstChars[ lunarDate.month ];
+			lunarDate.lunarMonth.alt = firstChars[ lunarDate.lunarMonth.NO ];
 		}
-		lunarDate.SC_LunarDay = this.getSexagenarySycle(lunarDate.cyclicalDay++);
-		switch (lunarDate.day) {
+		lunarDate.lunarDay.description = this.getSexagenarySycle(lunarDate.cyclicalDay++);
+		switch (lunarDate.lunarDay.NO) {
 			case 10:
-				lunarDate.lunarDay = '初十';
+				lunarDate.lunarDay.alt = '初十';
 				break;
 			case 20:
-				lunarDate.lunarDay = '二十';
+				lunarDate.lunarDay.alt = '二十';
 				break;
 			case 30:
-				lunarDate.lunarDay = '三十';
+				lunarDate.lunarDay.alt = '三十';
 				break;
 			default:
-				lunarDate.lunarDay = secondChars[ Math.floor(lunarDate.day / 10) ] + firstChars[ lunarDate.day % 10 ];
+				lunarDate.lunarDay.alt = secondChars[ Math.floor(lunarDate.lunarDay.NO / 10) ] + firstChars[ lunarDate.lunarDay.NO % 10 ];
 		}
-		lunarDate.day = offset + 1;
 
-		var solarTerms = '', solarFestival = '', lunarFestival = '', tmp1, tmp2;
+		if(this.additionalFestivals[ 'SC_' + intoDoubleDigit(lunarDate.month) + intoDoubleDigit(lunarDate.day) ]) {
+			//lunarDate.festivals.unshift(this.additionalFestivals[ 'SC_' + intoDoubleDigit(lunarDate.month) + intoDoubleDigit(lunarDate.day) ]);
+		}
+		(function(dataNums) {
+			var solarTerm = solarTerms[ dataNums[ 0 ] % solarTerms.length ];
 
-		lunarDate.festival = this.additionalFestivals[ 'SC_' + lunarDate.month + lunarDate.day ];
-		// 农历节日
-		/* for (i in lFtv)
-			if (lFtv[i].match(/^(d{2})(.{2})([s*])(.+)$/)) {
-				tmp1 = Number(RegExp.$1) - lDObj.month
-				tmp2 = Number(RegExp.$2) - lDObj.day
-				if (tmp1 == 0 && tmp2 == 0)
-					lunarFestival = RegExp.$4
+			try {
+				if(dataNums.length === 0) {
+					return;
+				}
+				if (new Date((31556925974.7 * (lunarDate.year - 1900) + solarTerm.NO * 60000) + Date.UTC(1900, 0, 6, 2, 5)).getUTCDate() == lunarDate.day && solarTerm.description) {
+					lunarDate.festivals.unshift(solarTerm.description);
+				}
+				dataNums.shift();
+				arguments.callee(dataNums);
+			} catch(error) {
+				$.writeln(error);
 			}
-		// 国历节日
-		for (i in sFtv)
-			if (sFtv[i].match(/^(d{2})(d{2})([s*])(.+)$/)) {
-				tmp1 = Number(RegExp.$1) - (SM + 1)
-				tmp2 = Number(RegExp.$2) - SD
-				if (tmp1 == 0 && tmp2 == 0)
-					solarFestival = RegExp.$4
-			} */
-		// 节气
-		tmp1 = new Date((31556925974.7 * (theDate.getFullYear() - 1900) + this.solarTerms[ lunarDate.month * 2 + 1 ] * 60000) + Date.UTC(1900, 0, 6, 2, 5));
-		tmp2 = tmp1.getUTCDate();
-		if (tmp2 == lunarDate.day) {
-			lunarDate.festival = solarTerm[SM * 2 + 1];
-		}
-		tmp1 = new Date((31556925974.7 * (theDate.getFullYear() - 1900) + this.solarTerms[ lunarDate.month * 2 ] * 60000) + Date.UTC(1900, 0, 6, 2, 5));
-		tmp2 = tmp1.getUTCDate();
-		if (tmp2 == lunarDate.day) {
-			lunarDate.festival = solarTerm[SM * 2];
+		})(new Array( theDate.getMonth() * 2 + 1, theDate.getMonth() * 2 ));
+		if(this.traditionalFestivals[ 'LC_' + intoDoubleDigit(lunarDate.lunarMonth.NO) + intoDoubleDigit(lunarDate.lunarDay.NO) ]) {
+			lunarDate.festivals.unshift(this.traditionalFestivals[ 'LC_' + intoDoubleDigit(lunarDate.lunarMonth.NO) + intoDoubleDigit(lunarDate.lunarDay.NO) ]);
 		}
 
 		return lunarDate;
 	}
 };
 
-var td = Calendar.getLunarDate(new Date());
-$.writeln(td.zodiac);
-$.writeln(td.lunarYear);
-$.writeln(td.lunarMonth);
-$.writeln(td.lunarDay);
-$.writeln(td.year);
-$.writeln(td.month);
-$.writeln(td.day);
+/**
+ * For Testing
+
+var td = Calendar.getLunarDate(new Date(2015, 9, 21));
+
+for(var v in td) {
+	if(td[ v ] instanceof Array) {
+		$.writeln(v + ' - ' + td[ v ]);
+	} else if(typeof td[ v ] === 'object') {
+		$.writeln(v);
+		for(var n in td[ v ]) {
+			$.writeln(n + ' - ' + td[ v ][ n ]);
+		}
+	} else {
+		$.writeln(v + ' - ' + td[ v ]);
+	}
+}
+ */
 
 /**
  * Calendar Configuration
@@ -329,24 +381,33 @@ var calendarData = {
 };
 var config = {
 	language : 'EN',
+	gap : 0.3,
+	positions : [],
 	savePath : '~/Desktop/'
 };
 var originalUnits = {
 	ruler : app.preferences.rulerUnits,
-	type :app.preferences.typeUnits
+	type : app.preferences.typeUnits
 }
 
+app.displayDialogs = DialogModes.NO;
 app.preferences.rulerUnits = Units[ calendarData.dimension.unit ];
+app.preferences.gridSize = GridSize.MEDIUM;
 //app.preferences.typeUnits = TypeUnits[ calendarData.dimension.unit ];
 while(app.documents.length) {
-	app.activeDocument.close()
+	app.activeDocument.close(SaveOptions.SAVECHANGES)
 }
 app.activeDocument = app.documents.add(calendarData.dimension.width, calendarData.dimension.height, calendarData.dimension.resolution, calendarData.DOM_Name());
-
+app.activeDocument.guides.add(Direction.VERTICAL, 0.5);
+app.activeDocument.guides.add(Direction.VERTICAL, calendarData.dimension.width - 0.5);
+app.activeDocument.guides.add(Direction.HORIZONTAL, 1);
+app.activeDocument.guides.add(Direction.HORIZONTAL, calendarData.dimension.height - 0.5);
 /**
  * Initialize Document
  */
-var ls, title, background;
+var startDate = new Date(calendarData.year, 0);
+var lineNum = 0, tempLunarDate;
+var ls, title, background, tempTH, tempDay, tempLunarDay;
 
 for(var m in Calendar.months) {
 	ls = app.activeDocument.layerSets.add();
@@ -358,8 +419,45 @@ for(var m in Calendar.months) {
 	title.textItem.font = 'Arial';
 	title.textItem.size = 16;
 	title.textItem.contents = Calendar.months[ m ][ config.language ];
+	title.translate(0.5 - parseFloat(title.bounds[ 0 ]), 0.5 - parseFloat(title.bounds[ 1 ]));
 	background.name = 'Background';
-	background.applyStyle('Puzzle (Image)');
+	try {
+		background.applyStyle('White Overlay');
+	} catch(error) {
+		$.writeln(error);
+	}
+
+	for(var w in Calendar.daysOfWeek) {
+		tempTH = ls.artLayers.add();
+		tempTH.kind = LayerKind.TEXT;
+		tempTH.textItem.font = 'Arial';
+		tempTH.textItem.size = 12;
+		tempTH.textItem.contents = Calendar.daysOfWeek[ w ].EN.charAt(0).toUpperCase();
+		tempTH.translate(0.5 + w * config.gap - parseFloat(tempTH.bounds[ 0 ]), 0.5 + config.gap - parseFloat(tempTH.bounds[ 1 ]));
+	}
+	for(var i = startDate.getDate(); startDate.getMonth() == m; startDate.setDate(++i)) {
+		tempLunarDate = Calendar.getLunarDate(startDate);
+		tempDay = ls.artLayers.add();
+		tempLunarDay = ls.artLayers.add();
+		tempLunarDay.kind = tempDay.kind = LayerKind.TEXT;
+		tempLunarDay.textItem.font = tempDay.textItem.font = 'Arial';
+
+		tempDay.textItem.size = 10;
+		tempDay.textItem.contents = i;
+		tempDay.translate(0.5 + startDate.getDay() * config.gap - parseFloat(tempDay.bounds[ 0 ]), 0.5 + config.gap * 2 + lineNum - parseFloat(tempDay.bounds[ 1 ]));
+
+		tempLunarDay.textItem.size = 6; 
+		tempLunarDay.textItem.contents = tempLunarDate.festivals[ 0 ] || tempLunarDate.lunarDay.alt;
+		tempLunarDay.translate(0.5 + startDate.getDay() * config.gap - parseFloat(tempLunarDay.bounds[ 0 ]), 0.5 + config.gap * 2.4 + lineNum - parseFloat(tempLunarDay.bounds[ 1 ]));
+		if(startDate.getDay() == 6) {
+			lineNum += config.gap;
+		}
+	}
+	ls.visible = (m == Calendar.months.length - 1);
+	lineNum = 0;
+	if(m == 0) {
+		break;
+	}
 }
 ls = null, title = null, background = null;
 
