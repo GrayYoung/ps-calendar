@@ -377,7 +377,14 @@ var calendarData = {
 	DOM_Name : function() {
 		return 'Calendar-' + calendarData.year;
 	},
-	backgrounds : 'E:\Images\BGS'
+	backgrounds : new Folder('E://Images/BGS').getFiles(function() {
+		if(arguments[ 0 ] && arguments[ 0 ] instanceof File && arguments[ 0 ].displayName.match(/\.(pdf|ai|jpg|jpeg|png|bmp|'gif|tif|psb|psd)$/i)) {
+			return true;
+		}
+		$.writeln(arguments[ 0 ].displayName + ' is not a image.');
+
+		return false;
+	})
 };
 //== To Get postScriptName Of Font - app.activeDocument.activeLayer.textItem.font
 var config = {
@@ -394,6 +401,7 @@ var originalUnits = {
 	ruler : app.preferences.rulerUnits,
 	type : app.preferences.typeUnits
 }
+config.targetFolder = new Folder(config.savePath);
 
 app.displayDialogs = DialogModes.NO;
 app.preferences.rulerUnits = Units[ calendarData.dimension.unit ];
@@ -407,113 +415,157 @@ app.activeDocument.guides.add(Direction.VERTICAL, 0.5);
 app.activeDocument.guides.add(Direction.VERTICAL, calendarData.dimension.width - 0.5);
 app.activeDocument.guides.add(Direction.HORIZONTAL, 1);
 app.activeDocument.guides.add(Direction.HORIZONTAL, calendarData.dimension.height - 0.5);
+
 /**
  * Initialize Document
  */
-var startDate = new Date(calendarData.year, 0);
-var lineNum = 0, tempLunarDate, position, moves = {
-	top : config.padding * 1.5,
-	right : calendarData.dimension.width -  config.padding - config.tableWidth,
-	bottom : calendarData.dimension.height -  config.padding - config.tableHeight,
-	left : config.padding
-};
-//== Photoshop LayerSets or Layers
-var tempLayerSets = {
-	month : null,
-	week : null,
-	day : null,
-	dayTable : null,
-	background : null
-};
-var tempLayers = {
-	title : null,
-	day : null,
-	date : null,
-	lunarDate : null
-};
+(function() {
+	var startDate = new Date(calendarData.year, 0);
+	var lineNum = 0, tempLunarDate, position, moves = {
+		top : config.padding * 1.5,
+		right : calendarData.dimension.width -  config.padding - config.tableWidth,
+		bottom : calendarData.dimension.height -  config.padding - config.tableHeight,
+		left : config.padding
+	}, bgWidth = 0, bgHeight = 0, zoomRatio = 100;
+	//== Photoshop LayerSets or Layers
+	var tempLayerSets = {
+		month : null,
+		week : null,
+		day : null,
+		dayTable : null,
+		background : null
+	};
+	var tempLayers = {
+		title : null,
+		day : null,
+		date : null,
+		lunarDate : null
+	};
 
-for(var m in Calendar.months) {
-	position = config.positions[ m ].split(' ');
-	if(position instanceof Array) {
-		if(position[ 0 ] !== 'left' && position[ 0 ] !== 'right') {
-			position[ 0 ]  = 'left';
-		}
-		if(position[ 1 ] !== 'top' && position[ 1 ] !== 'bottom') {
-			position[ 1 ]  = 'top';
-		}
-	} else if(typeof position === 'string') {
-		if(position === 'left' || position === 'right') {
-			position  = [ position, 'top' ];
-		} else if(position === 'top' || position === 'bottom') {
-			position  = [ 'left', position ];
+	for(var m in Calendar.months) {
+		position = config.positions[ m ].split(' ');
+		if(position instanceof Array) {
+			if(position[ 0 ] !== 'left' && position[ 0 ] !== 'right') {
+				position[ 0 ]  = 'left';
+			}
+			if(position[ 1 ] !== 'top' && position[ 1 ] !== 'bottom') {
+				position[ 1 ]  = 'top';
+			}
+		} else if(typeof position === 'string') {
+			if(position === 'left' || position === 'right') {
+				position  = [ position, 'top' ];
+			} else if(position === 'top' || position === 'bottom') {
+				position  = [ 'left', position ];
+			} else {
+				position = [ 'left', 'top' ];
+			}
 		} else {
 			position = [ 'left', 'top' ];
 		}
-	} else {
-		position = [ 'left', 'top' ];
-	}
 
-	tempLayerSets.month = app.activeDocument.layerSets.add();
-	tempLayerSets.month.name = Calendar.months[ m ].EN;
-	//background = tempLayerSets.month.artLayers.add();
-	tempLayers.title = tempLayerSets.month.artLayers.add();
-	tempLayers.title.kind = LayerKind.TEXT;
-	tempLayers.title.textItem.font = 'TimesNewRomanPS-BoldMT';
-	tempLayers.title.textItem.size = 16;
-	tempLayers.title.textItem.contents = Calendar.months[ m ][ config.language ];
-	tempLayers.title.translate(moves[ position[ 0 ] ] - parseFloat(tempLayers.title.bounds[ 0 ]), moves[ position[ 1 ] ] - parseFloat(tempLayers.title.bounds[ 1 ]));
-	//background.name = 'Background';
-	try {
-		//background.applyStyle('White Overlay');
-	} catch(error) {
-		$.writeln(error);
-	}
+		tempLayerSets.month = app.activeDocument.layerSets.add();
+		tempLayerSets.month.name = Calendar.months[ m ].EN;
 
-	tempLayerSets.week = tempLayerSets.month.layerSets.add();
-	tempLayerSets.week .name = 'Week Header';
-	for(var w in Calendar.daysOfWeek) {
-		tempLayers.day = tempLayerSets.week .artLayers.add();
-		tempLayers.day.kind = LayerKind.TEXT;
-		tempLayers.day.textItem.font = 'TimesNewRomanPS-BoldMT';
-		tempLayers.day.textItem.size = 12;
-		tempLayers.day.textItem.contents = Calendar.daysOfWeek[ w ].EN.charAt(0).toUpperCase();
-		tempLayers.day.translate(moves[ position[ 0 ] ] + w * config.gap - parseFloat(tempLayers.day.bounds[ 0 ]), moves[ position[ 1 ] ] + config.gap - parseFloat(tempLayers.day.bounds[ 1 ]));
-	}
-	tempLayerSets.dayTable = tempLayerSets.month.layerSets.add();
-	tempLayerSets.dayTable.name = 'Day Table';
-	for(var i = startDate.getDate(); startDate.getMonth() == m; startDate.setDate(++i)) {
-		tempLunarDate = Calendar.getLunarDate(startDate);
+		if(calendarData.backgrounds[ m ]) {
+			PlaceFile(calendarData.backgrounds[ m ]);
+			background = app.activeDocument.activeLayer;
+			background.move(tempLayerSets.month, ElementPlacement.PLACEATEND);
+			background.resize(100, 100);
+			bgWidth = background.bounds[2] - background.bounds[0], bgHeight = background.bounds[3] - background.bounds[1];
+			if(bgWidth / bgHeight > calendarData.dimension.width / calendarData.dimension.height) {
+				zoomRatio = 100 * (calendarData.dimension.height / bgHeight);
+				$.writeln('475: ' + zoomRatio);
+			} else {
+				zoomRatio = 100 * (calendarData.dimension.width / bgWidth);
+			}
+			background.resize(zoomRatio, zoomRatio, AnchorPosition.MIDDLECENTER);
+			background.translate(-background.bounds[0], 0)
+		} else {
+			background = tempLayerSets.month.artLayers.add();
+		}
+		background.name = 'Background';
 
-		tempLayerSets.day = tempLayerSets.dayTable.layerSets.add();
-		tempLayerSets.day.name = startDate.toDateString();
-		tempLayers.date = tempLayerSets.day.artLayers.add();	
-		tempLunarDay = tempLayerSets.day.artLayers.add();
+		tempLayers.title = tempLayerSets.month.artLayers.add();
+		tempLayers.title.kind = LayerKind.TEXT;
+		tempLayers.title.textItem.font = 'TimesNewRomanPS-BoldMT';
+		tempLayers.title.textItem.size = 16;
+		tempLayers.title.textItem.contents = Calendar.months[ m ][ config.language ];
+		tempLayers.title.translate(moves[ position[ 0 ] ] - parseFloat((tempLayers.title.boundsNoEffects || tempLayers.title.bounds)[ 0 ]), moves[ position[ 1 ] ] - parseFloat((tempLayers.title.boundsNoEffects || tempLayers.title.bounds)[ 1 ]));
+		tempLayers.title.applyStyle('White Glow');
 
-		tempLunarDay.kind = tempLayers.date.kind = LayerKind.TEXT;
+		tempLayerSets.week = tempLayerSets.month.layerSets.add();
+		tempLayerSets.week .name = 'Week Header';
+		for(var w in Calendar.daysOfWeek) {
+			tempLayers.day = tempLayerSets.week .artLayers.add();
+			tempLayers.day.name = Calendar.daysOfWeek[ w ].EN;
+			tempLayers.day.kind = LayerKind.TEXT;
+			tempLayers.day.textItem.font = 'TimesNewRomanPS-BoldMT';
+			tempLayers.day.textItem.size = 12;
+			tempLayers.day.textItem.contents = Calendar.daysOfWeek[ w ].EN.charAt(0).toUpperCase();
+			tempLayers.day.translate(moves[ position[ 0 ] ] + w * config.gap - parseFloat((tempLayers.day.boundsNoEffects || tempLayers.day.bounds)[ 0 ]), moves[ position[ 1 ] ] + config.gap - parseFloat((tempLayers.day.boundsNoEffects || tempLayers.day.bounds)[ 1 ]));
+		}
 
-		tempLayers.date.textItem.font = config.font;
-		tempLayers.date.textItem.size = 12;
-		tempLayers.date.textItem.contents = i;
-		tempLayers.date.translate(moves[ position[ 0 ] ] + startDate.getDay() * config.gap - parseFloat(tempLayers.date.bounds[ 0 ]), moves[ position[ 1 ] ] + config.gap * 1.8 + lineNum - parseFloat(tempLayers.date.bounds[ 1 ]));
+		tempLayerSets.dayTable = tempLayerSets.month.layerSets.add();
+		tempLayerSets.dayTable.name = 'Day Table';
+		for(var i = startDate.getDate(); startDate.getMonth() == m; startDate.setDate(++i)) {
+			tempLunarDate = Calendar.getLunarDate(startDate);
 
-		tempLunarDay.textItem.font = 'AdobeHeitiStd-Regular';
-		tempLunarDay.textItem.size = 6; 
-		tempLunarDay.textItem.contents = tempLunarDate.festivals[ 0 ] || tempLunarDate.lunarDay.alt;
-		tempLunarDay.translate(moves[ position[ 0 ] ] + startDate.getDay() * config.gap - parseFloat(tempLunarDay.bounds[ 0 ]), moves[ position[ 1 ] ] + config.gap * 2.2 + lineNum - parseFloat(tempLunarDay.bounds[ 1 ]));
-		
-		if(startDate.getDay() == 6) {
-			lineNum += config.gap;
+			tempLayerSets.day = tempLayerSets.dayTable.layerSets.add();
+			tempLayerSets.day.name = startDate.toDateString();
+			tempLayers.date = tempLayerSets.day.artLayers.add();	
+			tempLunarDay = tempLayerSets.day.artLayers.add();
+
+			tempLunarDay.kind = tempLayers.date.kind = LayerKind.TEXT;
+
+			tempLayers.date.textItem.font = config.font;
+			tempLayers.date.textItem.size = 12;
+			tempLayers.date.textItem.contents = i;
+			tempLayers.date.translate(moves[ position[ 0 ] ] + startDate.getDay() * config.gap - parseFloat((tempLayers.date.boundsNoEffects || tempLayers.date.bounds)[ 0 ]), moves[ position[ 1 ] ] + config.gap * 1.8 + lineNum - parseFloat((tempLayers.date.boundsNoEffects || tempLayers.date.bounds)[ 1 ]));
+
+			tempLunarDay.textItem.font = 'AdobeHeitiStd-Regular';
+			tempLunarDay.textItem.size = 6; 
+			tempLunarDay.textItem.contents = tempLunarDate.festivals[ 0 ] || tempLunarDate.lunarDay.alt;
+			tempLunarDay.translate(moves[ position[ 0 ] ] + startDate.getDay() * config.gap - parseFloat((tempLunarDay.boundsNoEffects || tempLunarDay.bounds)[ 0 ]), moves[ position[ 1 ] ] + config.gap * 2.2 + lineNum - parseFloat((tempLunarDay.boundsNoEffects || tempLunarDay.bounds)[ 1 ]));
+			
+			if(startDate.getDay() == 6) {
+				lineNum += config.gap;
+			}
+		}
+		try {
+			tempLayerSets.week.applyStyle('White Glow');
+			tempLayerSets.dayTable.applyStyle('White Glow');
+		} catch(error) {
+			$.writeln(error.line + ' : ' + error);
+			for(var wl =  0; wl < tempLayerSets.week.layers.length; wl++) {
+				tempLayerSets.week.layers[ wl ].applyStyle('White Glow');
+			}
+			for(var il = 0; il < tempLayerSets.dayTable.layerSets.length; il++) {
+				for(var nl = 0; nl < tempLayerSets.dayTable.layerSets[ il ].layers.length; nl++) {
+					tempLayerSets.dayTable.layerSets[ il ].layers[ nl ].applyStyle('White Glow');
+				}
+			}
+		}
+		tempLayerSets.month.visible = (m == Calendar.months.length - 1);
+		lineNum = 0;
+		if(m == 1) {
+			//break;
 		}
 	}
-	tempLayerSets.month.visible = (m == Calendar.months.length - 1);
-	lineNum = 0;
-	if(m == 0) {
-		break;
-	}
-}
-lineNum = null, tempLunarDate = null, position = null, moves = null;
-tempLayerSets = null, tempLayers = null;
+	lineNum = null, tempLunarDate = null, position = null, moves = null;
+	tempLayerSets = null, tempLayers = null;
+})();
 
 app.activeDocument.saveAs(new File(config.savePath + calendarData.DOM_Name() + '.psd'), new PhotoshopSaveOptions(), false, Extension.LOWERCASE);
 app.preferences.rulerUnits = originalUnits.ruler;
 //app.preferences.typeUnits = originalUnits.type;
+
+function PlaceFile(nFile) {
+   var actionDesc = new ActionDescriptor(), actionDescB = new ActionDescriptor();
+  
+   actionDesc.putPath(app.stringIDToTypeID('null'), nFile);
+   actionDesc.putEnumerated(app.charIDToTypeID('FTcs'), app.charIDToTypeID('QCSt'), app.charIDToTypeID('Qcsa') );  
+   actionDescB.putUnitDouble(app.charIDToTypeID('Hrzn'), app.charIDToTypeID('#Pxl'), 0.000000);
+   actionDescB.putUnitDouble(app.charIDToTypeID('Vrtc'), app.charIDToTypeID('#Pxl'), 0.000000);
+   actionDesc.putObject(app.charIDToTypeID('Ofst'), app.charIDToTypeID('Ofst'), actionDescB);
+   executeAction(app.charIDToTypeID('Plc '), actionDesc, DialogModes.NO);
+}
