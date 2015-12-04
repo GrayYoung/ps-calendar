@@ -421,12 +421,14 @@ app.activeDocument.guides.add(Direction.HORIZONTAL, calendarData.dimension.heigh
  */
 (function() {
 	var startDate = new Date(calendarData.year, 0);
-	var lineNum = 0, tempLunarDate, position, moves = {
+	var moves = {
 		top : config.padding * 1.5,
 		right : calendarData.dimension.width -  config.padding - config.tableWidth,
 		bottom : calendarData.dimension.height -  config.padding - config.tableHeight,
 		left : config.padding
-	}, bgWidth = 0, bgHeight = 0, zoomRatio = 100;
+	};
+	var tempLunarDate, position;
+	var lineNum = 0, bgWidth = 0, bgHeight = 0, zoomRatio = 100, layerSetStyleSupported = true;
 	//== Photoshop LayerSets or Layers
 	var tempLayerSets = {
 		month : null,
@@ -487,6 +489,7 @@ app.activeDocument.guides.add(Direction.HORIZONTAL, calendarData.dimension.heigh
 
 		tempLayers.title = tempLayerSets.month.artLayers.add();
 		tempLayers.title.kind = LayerKind.TEXT;
+		tempLayers.title.textItem.antiAliasMethod = AntiAlias.STRONG;
 		tempLayers.title.textItem.font = 'TimesNewRomanPS-BoldMT';
 		tempLayers.title.textItem.size = 16;
 		tempLayers.title.textItem.contents = Calendar.months[ m ][ config.language ];
@@ -495,54 +498,65 @@ app.activeDocument.guides.add(Direction.HORIZONTAL, calendarData.dimension.heigh
 
 		tempLayerSets.week = tempLayerSets.month.layerSets.add();
 		tempLayerSets.week .name = 'Week Header';
+		if(layerSetStyleSupported) {
+			try {
+				tempLayerSets.week.applyStyle('White Glow');
+			} catch(error) {
+				$.writeln(error.line + ' : ' + error);
+				layerSetStyleSupported = false;
+			}
+		}
 		for(var w in Calendar.daysOfWeek) {
 			tempLayers.day = tempLayerSets.week .artLayers.add();
 			tempLayers.day.name = Calendar.daysOfWeek[ w ].EN;
 			tempLayers.day.kind = LayerKind.TEXT;
+			tempLayers.day.textItem.antiAliasMethod = AntiAlias.STRONG;
 			tempLayers.day.textItem.font = 'TimesNewRomanPS-BoldMT';
 			tempLayers.day.textItem.size = 12;
 			tempLayers.day.textItem.contents = Calendar.daysOfWeek[ w ].EN.charAt(0).toUpperCase();
 			tempLayers.day.translate(moves[ position[ 0 ] ] + w * config.gap - parseFloat((tempLayers.day.boundsNoEffects || tempLayers.day.bounds)[ 0 ]), moves[ position[ 1 ] ] + config.gap - parseFloat((tempLayers.day.boundsNoEffects || tempLayers.day.bounds)[ 1 ]));
+			if(!layerSetStyleSupported) {
+				tempLayers.day.applyStyle('White Glow');
+			}
 		}
 
 		tempLayerSets.dayTable = tempLayerSets.month.layerSets.add();
 		tempLayerSets.dayTable.name = 'Day Table';
+		if(layerSetStyleSupported) {
+			try {
+				tempLayerSets.dayTable.applyStyle('White Glow');
+			} catch(error) {
+				$.writeln(error.line + ' : ' + error);
+			}
+		}
 		for(var i = startDate.getDate(); startDate.getMonth() == m; startDate.setDate(++i)) {
 			tempLunarDate = Calendar.getLunarDate(startDate);
 
 			tempLayerSets.day = tempLayerSets.dayTable.layerSets.add();
 			tempLayerSets.day.name = startDate.toDateString();
 			tempLayers.date = tempLayerSets.day.artLayers.add();	
-			tempLunarDay = tempLayerSets.day.artLayers.add();
+			tempLayers.lunarDate = tempLayerSets.day.artLayers.add();
 
-			tempLunarDay.kind = tempLayers.date.kind = LayerKind.TEXT;
+			tempLayers.lunarDate.kind = tempLayers.date.kind = LayerKind.TEXT;
 
+			tempLayers.date.textItem.antiAliasMethod = AntiAlias.STRONG;
 			tempLayers.date.textItem.font = config.font;
 			tempLayers.date.textItem.size = 12;
 			tempLayers.date.textItem.contents = i;
 			tempLayers.date.translate(moves[ position[ 0 ] ] + startDate.getDay() * config.gap - parseFloat((tempLayers.date.boundsNoEffects || tempLayers.date.bounds)[ 0 ]), moves[ position[ 1 ] ] + config.gap * 1.8 + lineNum - parseFloat((tempLayers.date.boundsNoEffects || tempLayers.date.bounds)[ 1 ]));
 
-			tempLunarDay.textItem.font = 'AdobeHeitiStd-Regular';
-			tempLunarDay.textItem.size = 6; 
-			tempLunarDay.textItem.contents = tempLunarDate.festivals[ 0 ] || tempLunarDate.lunarDay.alt;
-			tempLunarDay.translate(moves[ position[ 0 ] ] + startDate.getDay() * config.gap - parseFloat((tempLunarDay.boundsNoEffects || tempLunarDay.bounds)[ 0 ]), moves[ position[ 1 ] ] + config.gap * 2.2 + lineNum - parseFloat((tempLunarDay.boundsNoEffects || tempLunarDay.bounds)[ 1 ]));
-			
+			tempLayers.lunarDate.textItem.antiAliasMethod = AntiAlias.STRONG;
+			tempLayers.lunarDate.textItem.font = 'AdobeHeitiStd-Regular';
+			tempLayers.lunarDate.textItem.size = 6; 
+			tempLayers.lunarDate.textItem.contents = tempLunarDate.festivals[ 0 ] || tempLunarDate.lunarDay.alt;
+			tempLayers.lunarDate.translate(moves[ position[ 0 ] ] + startDate.getDay() * config.gap - parseFloat((tempLayers.lunarDate.boundsNoEffects || tempLayers.lunarDate.bounds)[ 0 ]), moves[ position[ 1 ] ] + config.gap * 2.2 + lineNum - parseFloat((tempLayers.lunarDate.boundsNoEffects || tempLayers.lunarDate.bounds)[ 1 ]));
+
+			if(!layerSetStyleSupported) {
+				tempLayers.date.applyStyle('White Glow');
+				tempLayers.lunarDate.applyStyle('White Glow');
+			}
 			if(startDate.getDay() == 6) {
 				lineNum += config.gap;
-			}
-		}
-		try {
-			tempLayerSets.week.applyStyle('White Glow');
-			tempLayerSets.dayTable.applyStyle('White Glow');
-		} catch(error) {
-			$.writeln(error.line + ' : ' + error);
-			for(var wl =  0; wl < tempLayerSets.week.layers.length; wl++) {
-				tempLayerSets.week.layers[ wl ].applyStyle('White Glow');
-			}
-			for(var il = 0; il < tempLayerSets.dayTable.layerSets.length; il++) {
-				for(var nl = 0; nl < tempLayerSets.dayTable.layerSets[ il ].layers.length; nl++) {
-					tempLayerSets.dayTable.layerSets[ il ].layers[ nl ].applyStyle('White Glow');
-				}
 			}
 		}
 		tempLayerSets.month.visible = (m == Calendar.months.length - 1);
@@ -551,7 +565,9 @@ app.activeDocument.guides.add(Direction.HORIZONTAL, calendarData.dimension.heigh
 			//break;
 		}
 	}
-	lineNum = null, tempLunarDate = null, position = null, moves = null;
+
+	startDate = null, moves = null, tempLunarDate = null, position = null;
+	lineNum = null, bgWidth = null, bgHeight = null, zoomRatio = null, layerSetStyleSupported = null;
 	tempLayerSets = null, tempLayers = null;
 })();
 
