@@ -39,9 +39,9 @@
 			myPathItem.remove();
 		},
 		createCycle : function(size, cPosition) {
-			var doc = app.activeDocument;
 			var lineSubPathArray = new SubPathInfo();
 			var lineArray = new Array(new PathPointInfo, new PathPointInfo, new PathPointInfo, new PathPointInfo);
+			var directionDistance = 0;
 
 			if(!(cPosition instanceof Array)) {
 				cPosition = [size / 2, size / 2];
@@ -55,30 +55,32 @@
 			if(typeof cPosition[1] !== 'number') {
 				cPosition[1] = size / 2;
 			}
+			directionDistance = size / 4;
+
 			lineArray[0].kind = PointKind.SMOOTHPOINT;
 			lineArray[0].anchor = [cPosition[0], cPosition[1] - size / 2];
-			lineArray[0].leftDirection = [cPosition[0] + size / 4, cPosition[1] - size / 2];
-			lineArray[0].rightDirection = [cPosition[0] - size / 4, cPosition[1] - size / 2];
+			lineArray[0].leftDirection = [cPosition[0] + directionDistance, cPosition[1] - size / 2];
+			lineArray[0].rightDirection = [cPosition[0] - directionDistance, cPosition[1] - size / 2];
 
 			lineArray[1].kind = PointKind.SMOOTHPOINT;
 			lineArray[1].anchor = [cPosition[0] + size / 2, cPosition[1]];
-			lineArray[1].leftDirection = [cPosition[0] + size / 2, cPosition[1] + size / 4];
-			lineArray[1].rightDirection = [cPosition[0] + size / 2, cPosition[1] - size / 4];
+			lineArray[1].leftDirection = [cPosition[0] + size / 2, cPosition[1] + directionDistance];
+			lineArray[1].rightDirection = [cPosition[0] + size / 2, cPosition[1] - directionDistance];
 
 			lineArray[2].kind = PointKind.SMOOTHPOINT;
 			lineArray[2].anchor = [cPosition[0], cPosition[1] + size / 2];
-			lineArray[2].leftDirection = [cPosition[0] - size / 4, cPosition[1] + size / 2];
-			lineArray[2].rightDirection = [cPosition[0] + size / 4, cPosition[1] + size / 2];
+			lineArray[2].leftDirection = [cPosition[0] - directionDistance, cPosition[1] + size / 2];
+			lineArray[2].rightDirection = [cPosition[0] + directionDistance, cPosition[1] + size / 2];
 
 			lineArray[3].kind = PointKind.SMOOTHPOINT;
 			lineArray[3].anchor = [cPosition[0] - size / 2, cPosition[1]];
-			lineArray[3].leftDirection = [cPosition[0] - size / 2, cPosition[1] - size / 4];
-			lineArray[3].rightDirection = [cPosition[0] - size / 2, cPosition[1] + size / 4];
+			lineArray[3].leftDirection = [cPosition[0] - size / 2, cPosition[1] - directionDistance];
+			lineArray[3].rightDirection = [cPosition[0] - size / 2, cPosition[1] + directionDistance];
 
 			lineSubPathArray.closed = true;
 			lineSubPathArray.operation = ShapeOperation.SHAPEADD;
 			lineSubPathArray.entireSubPath = lineArray;
-			var myPathItem = doc.pathItems.add("myPath", [lineSubPathArray]);
+			var myPathItem =app.activeDocument.pathItems.add("myPath", [lineSubPathArray]);
 
 			var desc88 = new ActionDescriptor();
 			var desc89 = new ActionDescriptor();

@@ -526,7 +526,7 @@ app.activeDocument.guides.add(Direction.HORIZONTAL, calendarData.dimension.heigh
 			try {
 				tempLayerSets.dayTable.applyStyle('White Glow');
 			} catch(error) {
-				$.writeln(error.line + ' : ' + error);
+				$.writeln(error.file + ' - Line ' + error.line + ' : ' + error);
 			}
 		}
 		for(var i = startDate.getDate(); startDate.getMonth() == m; startDate.setDate(++i)) {
