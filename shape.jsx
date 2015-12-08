@@ -80,7 +80,7 @@
 			lineSubPathArray.closed = true;
 			lineSubPathArray.operation = ShapeOperation.SHAPEADD;
 			lineSubPathArray.entireSubPath = lineArray;
-			var myPathItem =app.activeDocument.pathItems.add("myPath", [lineSubPathArray]);
+			var myPathItem = app.activeDocument.pathItems.add("myPath", [lineSubPathArray]);
 
 			var desc88 = new ActionDescriptor();
 			var desc89 = new ActionDescriptor();
@@ -123,7 +123,7 @@
 			spi.operation = ShapeOperation.SHAPEXOR;
 			spi.entireSubPath = [startPoint, stopPoint];
 
-			line = doc.pathItems.add("Line", [spi]);
+			line = app.activeDocument.pathItems.add("Line", [spi]);
 			line.strokePath(ToolType.PENCIL);
 			line.remove();
 		},
@@ -148,6 +148,6 @@
 // Put the coordinates in clockwise order
 //DrawShape([200, 200], [300, 300], [200, 400], [100, 300]);
 
-//drawLine(app.activeDocument, [100,100], [200,200]);
+//drawLine([100,100], [200,200]);
 
 Shape.vector.createCycle(200);
