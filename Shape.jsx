@@ -1,4 +1,8 @@
-﻿var Shape = {
+/**
+ * Shape
+ */
+
+var Shape = {
 	vector : {
 		create : function() {
 			var doc = app.activeDocument;
@@ -38,11 +42,15 @@
 			executeAction(charIDToTypeID("Mk  "), desc88, DialogModes.NO);
 			myPathItem.remove();
 		},
-		createCycle : function(r, cPosition) {
-			var subPath = new SubPathInfo();
-			var points = new Array(new PathPointInfo, new PathPointInfo, new PathPointInfo, new PathPointInfo);
+		/*
+		 * r : radius
+		 * cPosition(Array) : The coordinate of center of the ellipse.
+		 * dDistance(Array) : Determine the shape
+		 */
+		createEllipse : function(r, cPosition, radians) {
+			var subPath = new SubPathInfo(), points = new Array(new PathPointInfo, new PathPointInfo, new PathPointInfo, new PathPointInfo);
 			var roundPathLayer;
-			var directionDistance = 0;
+			var dDistance;
 
 			if(!(cPosition instanceof Array)) {
 				cPosition = [r, r];
@@ -56,27 +64,33 @@
 			if(typeof cPosition[1] !== 'number') {
 				cPosition[1] = r;
 			}
-			directionDistance = r / Math.tan(Math.PI / (180 / 61));
+			if(radians instanceof Array) {
+				dDistance = new Array(2);
+				dDistance[0] = r / Math.tan(Math.PI / (180 / radians[0]));
+				dDistance[1] = r / Math.tan(Math.PI / (180 / radians[2]));
+			} else {
+				dDistance = r / Math.tan(Math.PI / (180 / 61));
+			}
 
 			points[0].kind = PointKind.SMOOTHPOINT;
 			points[0].anchor = [cPosition[0], cPosition[1] - r];
-			points[0].leftDirection = [cPosition[0] + directionDistance, cPosition[1] - r];
-			points[0].rightDirection = [cPosition[0] - directionDistance, cPosition[1] - r];
+			points[0].leftDirection = [cPosition[0] + dDistance, cPosition[1] - r];
+			points[0].rightDirection = [cPosition[0] - dDistance, cPosition[1] - r];
 
 			points[1].kind = PointKind.SMOOTHPOINT;
 			points[1].anchor = [cPosition[0] + r, cPosition[1]];
-			points[1].leftDirection = [cPosition[0] + r, cPosition[1] + directionDistance];
-			points[1].rightDirection = [cPosition[0] + r, cPosition[1] - directionDistance];
+			points[1].leftDirection = [cPosition[0] + r, cPosition[1] + dDistance];
+			points[1].rightDirection = [cPosition[0] + r, cPosition[1] - dDistance];
 
 			points[2].kind = PointKind.SMOOTHPOINT;
 			points[2].anchor = [cPosition[0], cPosition[1] + r];
-			points[2].leftDirection = [cPosition[0] - directionDistance, cPosition[1] + r];
-			points[2].rightDirection = [cPosition[0] + directionDistance, cPosition[1] + r];
+			points[2].leftDirection = [cPosition[0] - dDistance, cPosition[1] + r];
+			points[2].rightDirection = [cPosition[0] + dDistance, cPosition[1] + r];
 
 			points[3].kind = PointKind.SMOOTHPOINT;
 			points[3].anchor = [cPosition[0] - r, cPosition[1]];
-			points[3].leftDirection = [cPosition[0] - r, cPosition[1] - directionDistance];
-			points[3].rightDirection = [cPosition[0] - r, cPosition[1] + directionDistance];
+			points[3].leftDirection = [cPosition[0] - r, cPosition[1] - dDistance];
+			points[3].rightDirection = [cPosition[0] - r, cPosition[1] + dDistance];
 
 			subPath.closed = true;
 			subPath.operation = ShapeOperation.SHAPEADD;
@@ -150,4 +164,4 @@
 
 //drawLine([100,100], [200,200]);
 
-Shape.vector.createCycle(50);
+//Shape.vector.createCycle(50);
