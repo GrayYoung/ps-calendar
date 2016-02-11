@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Shape
  */
 
@@ -164,4 +164,4 @@ var Shape = {
 
 //drawLine([100,100], [200,200]);
 
-//Shape.vector.createCycle(50);
+Shape.vector.createCycle(50);
