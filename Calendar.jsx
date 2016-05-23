@@ -1,3 +1,11 @@
+/**
+ * Photoshop.Calendar
+ * Version: 1.1.7
+ * Author: Gray Young
+ * 
+ * Copyright 2016 Released under the MIT license.
+ */
+
 ﻿#include "Shape.jsx"
 
 /**
