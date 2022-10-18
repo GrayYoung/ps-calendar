@@ -1,0 +1,26 @@
+{
+  "name": "ps-calendar",
+  "version": "1.0.0",
+  "description": "Photoshop chinese calenfar generator.",
+  "main": "PSConstants.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/GrayYoung/ps-calendar.git"
+  },
+  "keywords": [
+    "ps",
+    "photoshop"
+  ],
+  "author": "Gray Young",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/GrayYoung/ps-calendar/issues"
+  },
+  "homepage": "https://github.com/GrayYoung/ps-calendar#readme",
+  "dependencies": {
+    "@marchingy/lunar": "^0.1.0"
+  }
+}

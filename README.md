@@ -1,2 +1,3 @@
 # Calendar
-PhotoshopScript calendar
+
+PhotoshopScript chinese calendar generator.
